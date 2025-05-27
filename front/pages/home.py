@@ -10,9 +10,5 @@ layout = dbc.Container([
         Cette application permet d'explorer les données d'accidents de la route entre 2019 et 2023. 
         Vous y trouverez des statistiques, des visualisations interactives et un outil de prédiction.
     """),
-    html.Hr(),
-    html.H4("Navigation rapide :"),
-    dbc.ListGroup([
-        dbc.ListGroupItem("Statistiques générales", href="/stats", action=True)
-    ]),
+    html.P("Utilisez le menu de navigation ci-dessus pour accéder aux différentes sections."),
 ])
