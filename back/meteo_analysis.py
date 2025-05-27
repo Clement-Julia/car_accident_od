@@ -8,7 +8,6 @@ data_path = os.path.join(current_dir, "..", "data", "dataset_simplify.csv")
 df = pd.read_csv(data_path)
 df_unique = df.drop_duplicates("Num_Acc")
 
-# Mapping grav en score numérique
 grav_mapping = {
     'Indemne': 1,
     'Blessé léger': 2,
@@ -17,7 +16,6 @@ grav_mapping = {
 }
 df['grav_num'] = df['grav'].map(grav_mapping)
 
-# 1. Gravite moyenne par condition météo
 def plot_gravite_meteo():
     gravite_par_atm = df.dropna(subset=['grav_num', 'atm'])
     gravite_par_atm = gravite_par_atm.groupby('atm')['grav_num'].mean().reset_index()
@@ -32,7 +30,6 @@ def plot_gravite_meteo():
     plt.tight_layout()
     plt.show()
 
-# 2. Nombre d'accidents par condition météo (hors "Normale")
 def plot_nombre_accidents_meteo_sans_normale():
     df_filtered = df_unique[df_unique['atm'] != 'Normale']
     df_atm = df_filtered['atm'].value_counts().reset_index()
@@ -47,7 +44,6 @@ def plot_nombre_accidents_meteo_sans_normale():
     plt.tight_layout()
     plt.show()
 
-# 3. Barplot route x météo (sans "Normale")
 def plot_catr_atm_sans_normale():
     df_grouped = df_unique.groupby(['catr', 'atm']).size().reset_index(name='nb_accidents')
     df_grouped = df_grouped[df_grouped['atm'] != 'Normale']
@@ -62,7 +58,6 @@ def plot_catr_atm_sans_normale():
     plt.tight_layout()
     plt.show()
 
-# Exemple d'appel (commenter si appel depuis Dash)
 if __name__ == "__main__":
     plot_gravite_meteo()
     plot_nombre_accidents_meteo_sans_normale()
