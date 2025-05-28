@@ -9,8 +9,6 @@ def load_temporal_data(df):
     df['mois'] = df['date'].dt.month
     df['jour_semaine'] = df['date'].dt.dayofweek
     df['heure'] = df['date'].dt.hour
-
-    # nettoyage de la gravité pour éviter les bugs downstream
     df['grav'] = df['grav'].astype(str).str.strip()
 
     return df
@@ -73,6 +71,15 @@ def plot_heatmap_jour_heure(df):
                     template="plotly_dark", aspect="auto")
     return fig
 
+def stats_top_zones_temporelles(df):
+    jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+    df['jour_label'] = df['jour_semaine'].map(dict(zip(range(7), jours)))
+    top = df.groupby(['jour_label', 'heure']).size().reset_index(name='count')
+    top_sorted = top.sort_values(by='count', ascending=False).head(10)
+    top_sorted.columns = ['Jour', 'Heure', 'Nombre d\'accidents']
+    return top_sorted
+
+
 def plot_accidents_heure_gravite(df):
     ordre_gravite = ["Indemne", "Blessé léger", "Blessé hospitalisé", "Tué"]
     df_filtered = df[df['grav'].isin(ordre_gravite)].copy()
@@ -84,7 +91,6 @@ def plot_accidents_heure_gravite(df):
         labels={"grav": "Gravité"}
     )
     return fig
-
 
 def plot_gravite_annee(df):
     ordre_gravite = ["Indemne", "Blessé léger", "Blessé hospitalisé", "Tué"]
@@ -99,12 +105,20 @@ def plot_gravite_annee(df):
     fig.update_xaxes(dtick=1, tickformat=".0f")
     return fig
 
+def stats_gravite_annee(df):
+    ordre = ["Indemne", "Blessé léger", "Blessé hospitalisé", "Tué"]
+    df_grav = df[df['grav'].isin(ordre)].copy()
+    total = df_grav.groupby('annee').size()
+    stats = df_grav.groupby(['annee', 'grav']).size().unstack(fill_value=0)
+    stats = stats.divide(total, axis=0) * 100
+    stats = stats[ordre].round(1).reset_index()
+    return stats
+
 def plot_accidents_jour_catr(df):
     jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
     df['jour_label'] = df['jour_semaine'].map(dict(zip(range(7), jours)))
     df_filtered = df.dropna(subset=['catr', 'jour_label'])
 
-    # Exclure certains types de route
     exclude_labels = [
         "Hors réseau public",
         "Autre",
