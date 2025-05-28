@@ -4,6 +4,7 @@ from dash import html, dcc
 import pandas as pd
 import os
 from back.autres_graphs import *
+from back.vehicule_analysis import *
 from utils.helpers import accordion_stats
 
 dash.register_page(__name__, path="/autres")
@@ -30,4 +31,16 @@ layout = html.Div([
         dcc.Graph(figure=gravite_catv(df)),
         accordion_stats("Pourcentage de type de véhicules par gravité", gravite_catv_stats(df), is_percent=True)
     ], className="card-dark"),  
+
+    html.Div([
+        dcc.Graph(figure=plot_top_vehicules_graves(df))
+    ], className="card-dark"),
+
+    html.Div([
+        dcc.Graph(figure=plot_gravite_moyenne_manv(df))
+    ], className="card-dark"),
+
+    html.Div([
+        dcc.Graph(figure=plot_nombre_accidents_manv(df))
+    ], className="card-dark"),
 ])
