@@ -15,7 +15,7 @@ import pandas as pd
 import os
 from front.graphs.plot_meteo import plot_gravite_meteo_interactif, plot_nombre_accidents_meteo, plot_catr_atm
 
-dash.register_page(__name__, name="Statistique", path="/statistique")
+dash.register_page(__name__, name="Statistiques", path="/statistique")
 def load_df():
     current_dir = os.path.dirname(__file__)
     data_path = os.path.join(current_dir, "..","..", "data", "dataset_simplify.csv")
