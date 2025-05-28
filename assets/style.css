@@ -1,7 +1,13 @@
 body {
     background-color: #121212 !important;
     color: #f0f0f0 !important;
-    padding: 20px;
+    padding: 0;
+}
+#_pages_content {
+    padding: 0px 30px 30px 30px;
+}
+.container-fluid {
+    padding: 0;
 }
 .card-dark {
     background-color: #1e1e1e;
@@ -10,12 +16,52 @@ body {
     margin-bottom: 1rem;
 }
 .title-main {
+    font-size: 2.5rem;
     font-weight: bold;
     color: #f8f9fa;
-}  
-.nav-menu {
+
+    margin-bottom: 1.5rem;
+    display: flex;
     justify-content: center;
+}  
+.home-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 1.2rem;
 }
+
+/* ----------------------------------- NAVBAR ----------------------------------- */
+.navbar-container {
+    background-color: #016bc1 !important;
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+.navbar-title {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: white;
+}
+.navbar-nav {
+    gap: 1rem;
+}
+.nav-item, .header_btn {
+    color: #ffffff;
+    padding: 0.5rem 1rem;
+}
+.navbar-link {
+    color: #ffffff;
+    font-weight: 500;
+    text-decoration: none;
+}
+.navbar-item:hover, .header_btn:hover, .navbar-link:hover {
+    color: #dddddd;
+    text-decoration: none;
+}
+
+/* ----------------------------------- RADIO ----------------------------------- */
 .radio-container {
     text-align: center;
     margin: 30px 0;
@@ -36,6 +82,7 @@ body {
     transform: scale(1.4);
     margin-right: 10px;
 }
+
 /* ----------------------------------- ACCORDION ----------------------------------- */
 .accordion-dark .accordion-button,
 .accordion-dark .accordion-item,

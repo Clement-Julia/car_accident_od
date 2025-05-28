@@ -5,15 +5,14 @@ import pandas as pd
 import os
 from utils.helpers import accordion_stats
 
-dash.register_page(__name__, path="/temporal")
+dash.register_page(__name__, name="Stats temporelles", path="/temporal")
 
-# Chargement des données
 base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 df = pd.read_csv(os.path.join(base_path, "data", "dataset_simplify.csv"), dtype=str)
 df = load_temporal_data(df)
 
 layout = html.Div([
-    html.H3("Analyse temporelle des accidents"),
+    html.H3("Analyse temporelle des accidents", className="title-main"),
 
     html.Div([
         html.Label("Sélectionnez une vue :", className="radio-title"),
