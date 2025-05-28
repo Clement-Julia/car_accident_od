@@ -1,0 +1,66 @@
+body {
+    background-color: #121212 !important;
+    color: #f0f0f0 !important;
+    padding: 20px;
+}
+.card-dark {
+    background-color: #1e1e1e;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+.title-main {
+    font-weight: bold;
+    color: #f8f9fa;
+}  
+.nav-menu {
+    justify-content: center;
+}
+.radio-container {
+    text-align: center;
+    margin: 30px 0;
+}  
+.radio-title {
+    font-size: 1.5rem;
+    color: #f0f0f0;
+    margin-bottom: 15px;
+    display: block;
+} 
+.radio-switch label {
+    font-size: 1.2rem;
+    color: #ffffff;
+    margin: 0 15px;
+    cursor: pointer;
+} 
+.radio-switch input[type="radio"] {
+    transform: scale(1.4);
+    margin-right: 10px;
+}
+/* ----------------------------------- ACCORDION ----------------------------------- */
+.accordion-dark .accordion-button,
+.accordion-dark .accordion-item,
+.accordion-dark .accordion-header {
+    background-color: #016bc1 !important;
+    color: white !important;
+    border-color: #333 !important;
+    box-shadow: none;
+    font-weight: bold;
+}
+.accordion-body {
+    background-color: #1e1e1e;
+    padding: 16px;
+}
+.accordion-dark .accordion-button:not(.collapsed) {
+    background-color: #055291 !important;
+}
+.table-dark-custom {
+    background-color: #1e1e1e;
+    color: white;
+    border-collapse: collapse;
+    width: 100%;
+}
+.table-dark-custom th, .table-dark-custom td {
+    border: 1px solid #d7d7d7;
+    padding: 6px 12px;
+    text-align: left;
+}
