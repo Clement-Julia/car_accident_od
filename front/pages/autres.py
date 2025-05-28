@@ -37,10 +37,11 @@ layout = html.Div([
     ], className="card-dark"),
 
     html.Div([
-        dcc.Graph(figure=plot_gravite_moyenne_manv(df))
+        dcc.Graph(figure=plot_gravite_moyenne_manv(df)),
     ], className="card-dark"),
 
     html.Div([
-        dcc.Graph(figure=plot_nombre_accidents_manv(df))
+        dcc.Graph(figure=plot_nombre_accidents_manv(df)),
+        accordion_stats("Nombre d'accidents par manœuvre", stats_nb_accidents_manv(df), is_percent=False)
     ], className="card-dark"),
 ])

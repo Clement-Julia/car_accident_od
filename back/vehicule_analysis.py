@@ -1,14 +1,14 @@
 import pandas as pd
 import plotly.express as px
 
-def plot_top_vehicules_graves(df):
+grav_mapping = {
+    'Indemne': 1,
+    'Blessé léger': 2,
+    'Blessé hospitalisé': 3,
+    'Tué': 4
+}
 
-    grav_mapping = {
-        'Indemne': 1,
-        'Blessé léger': 2,
-        'Blessé hospitalisé': 3,
-        'Tué': 4
-    }
+def plot_top_vehicules_graves(df):
     df['grav_num'] = df['grav'].map(grav_mapping)
     df_graves = df[df['grav'].isin(['Tué', 'Blessé hospitalisé'])]
     top_vehicules = df_graves['catv'].value_counts().head(10).reset_index()
@@ -31,12 +31,6 @@ def plot_top_vehicules_graves(df):
     return fig
 
 def plot_gravite_moyenne_manv(df):
-    grav_mapping = {
-    'Indemne': 1,
-    'Blessé léger': 2,
-    'Blessé hospitalisé': 3,
-    'Tué': 4
-    }
     df['grav_num'] = df['grav'].map(grav_mapping)
     df_manv = df.groupby('manv').agg(
         grav_moyenne=('grav_num', 'mean')
@@ -62,15 +56,7 @@ def plot_gravite_moyenne_manv(df):
     )
     return fig
 
-
 def plot_nombre_accidents_manv(df):
-
-    grav_mapping = {
-    'Indemne': 1,
-    'Blessé léger': 2,
-    'Blessé hospitalisé': 3,
-    'Tué': 4
-    }
     df['grav_num'] = df['grav'].map(grav_mapping)
 
     df_manv = df.groupby('manv').agg(
@@ -94,3 +80,9 @@ def plot_nombre_accidents_manv(df):
         template="plotly_dark"
     )
     return fig
+
+def stats_nb_accidents_manv(df):
+    global manv_order
+    count_df = df['manv'].value_counts().reindex(manv_order).reset_index()
+    count_df.columns = ['Manœuvre', 'Nombre d\'accidents']
+    return count_df
