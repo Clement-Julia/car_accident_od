@@ -1,2 +1,6 @@
 dataset_simplify.csv
 dataset.zip
+/data/*
+front/graphs/__pycache__
+front/pages/__pycache__
+bdd.db
