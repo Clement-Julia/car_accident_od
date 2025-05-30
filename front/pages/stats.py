@@ -1,64 +1,50 @@
-# import dash
-# from dash import html
-
-# dash.register_page(__name__, path="/stats")
-
-# layout = html.Div([
-#     html.H3("Statistiques générales"),
-#     html.P("Cette section affichera des chiffres clés : nombre d'accidents, blessés, mortalité, etc.")
-# ])
 import dash
-import sqlite3
-from dash import html, dcc, Output, Input
 import dash_leaflet as dl
-import pandas as pd
+from dash import html, dcc, Input, Output
+import sqlite3
 import os
 from back.meteo_analysis import plot_gravite_meteo, plot_nombre_accidents_meteo, plot_nombre_accidents_meteo_sans_normale, plot_catr_atm
 from utils.helpers import accordion_stats
+import pandas as pd
+import requests
 
 dash.register_page(__name__, name="Statistiques", path="/statistique")
-def load_df():
-    current_dir = os.path.dirname(__file__)
-    data_path = os.path.join(current_dir, "..","..", "data", "dataset_simplify.csv")
-    df = pd.read_csv(data_path)
-    df_unique = df.drop_duplicates("Num_Acc")
 
-    grav_mapping = {
-        'Indemne': 1,
-        'Blessé léger': 2,
-        'Blessé hospitalisé': 3,
-        'Tué': 4
-    }
-    df['grav_num'] = df['grav'].map(grav_mapping)
-    return df, df_unique
+API_URL = "http://localhost:5001"  # ou ton IP réelle si distribué
+
 def get_vehicule_types():
-    db_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "ma_base.db")
-    conn = sqlite3.connect(db_path)
-    query = "SELECT DISTINCT * FROM donnees_simplifiees"
-    df = pd.read_sql_query(query, conn)
-    print(df)
-    conn.close()
-    return df["vehicule_type_majoritaire"].dropna().unique()
-df, df_unique = load_df()
+    r = requests.get(f"{API_URL}/vehicule-types")
+    return r.json()
+def get_grav_accident():
+    r = requests.get(f"{API_URL}/grav-types")
+    return r.json()
+
+def get_filtered_points(catv,grav_type, start_year, end_year):
+    params = {"catv": catv,"grav": grav_type, "start": start_year, "end": end_year}
+    r = requests.get(f"{API_URL}/points", params=params)
+    return r.json()
+
+
+
+# Layout initial de la page
 layout = html.Div([
     html.H2("Exploration des statistiques"),
-
-    html.Label("Sélectionner une section :"),
     dcc.Dropdown(
         id="section_selector",
         options=[
-            {"label": "Statistiques météo", "value": "meteo"},
             {"label": "Cartographie", "value": "carto"},
+            {"label": "Statistiques météo", "value": "meteo"},
+            {"label": "Statistiques temporelles", "value": "temporal"},
             {"label": "Autres statistiques", "value": "autres"}
         ],
         value="meteo",
         clearable=False,
         style={"width": "300px", "marginBottom": "20px"}
     ),
-
     html.Div(id="section_content")
 ])
 
+# Callback pour afficher la section choisie
 @dash.callback(
     Output("section_content", "children"),
     Input("section_selector", "value")
@@ -76,25 +62,105 @@ def update_section(selected_section):
             # accordion_stats("Âge moyen et écart-type par gravité", dcc.Graph(figure=plot_nombre_accidents_meteo_sans_normale(df.copy())), is_percent=False),
             html.Hr(),
             dcc.Graph(figure=plot_catr_atm(df_unique.copy())),
-        ])
-    elif selected_section == "carto":
-        vehicule_types = get_vehicule_types()
-
-        vehicule_dropdown = dcc.Dropdown(
-            id="vehicule_selector",
-            options=[{"label": v, "value": v} for v in vehicule_types],
-            placeholder="Sélectionner un type de véhicule",
-            style={"width": "300px", "marginBottom": "20px"}
-        )
-        return html.Div([
-            html.H4("Section : Cartographie"),
-            html.Label("Filtrer par type de véhicule :"),
-            vehicule_dropdown,
-            dl.Map(center=[46.5, 2.5], zoom=6, children=[
-                dl.TileLayer()
-            ], style={'width': '100%', 'height': '600px', 'margin': 'auto'})
+            html.P("Ici se trouveront les graphiques interactifs liés à la météo.")
         ])
     elif selected_section == "autres":
         return html.Div([
-            html.H4("Section : Autres statistiques")
+            html.H4("Section : Autres statistiques"),
+            html.P("Ici se trouveront d'autres indicateurs.")
         ])
+    elif selected_section == "temporal":
+        return html.Div([
+            html.H4("Section : Statistiques temporelles"),
+            html.P("Ici se trouveront les graphiques interactifs liés au temps.")
+        ])
+    elif selected_section == "carto":
+        # Prépare le dropdown avec les différents types de véhicules
+        vehicule_types = get_vehicule_types()
+        vehicule_dropdown = html.Div([
+            html.Label("Filtrer par type de véhicule (catv) :"),
+            dcc.Dropdown(
+                id="vehicule_selector",
+                options=[{"label": v, "value": v} for v in vehicule_types],
+                value="",
+                placeholder="Sélectionner un type de véhicule",
+                className="carto_select"
+            )  
+        ])
+        grav_accident = get_grav_accident()
+        grav_dropdown = html.Div([
+            html.Label("Filtrer par gravitée d'accident (grav) :"),
+            dcc.Dropdown(
+                id="grav_selector",
+                options=[{"label":grav, "value": grav} for grav in grav_accident],
+                value="",
+                placeholder="Sélectionner une gravité d'accident",
+                className="carto_select"
+            )
+        ])
+        period_range = html.Div([
+            html.Label("Période à afficher (années) :"),
+            dcc.RangeSlider(
+                id='year_range',
+                min=2014,
+                max=2023,
+                step=1,
+                value=[2014, 2023],
+                marks={year: str(year) for year in range(2014, 2024)},
+                tooltip={"placement": "bottom", "always_visible": True},
+                allowCross=False
+            )
+        ])
+        # La section Carto intègre le dropdown pour filtrer et la carte avec un groupe de marqueurs
+        return html.Div([
+            html.H4("Section : Cartographie"),
+            html.Div([vehicule_dropdown,grav_dropdown]),
+            period_range,
+            dl.Map(id="map", center=[46.5, 2.5], zoom=6, children=[
+                dl.TileLayer(), 
+            dl.GeoJSON(
+                id="geojson_cluster",
+                cluster=True,
+                zoomToBoundsOnClick=True,
+                options={"pointToLayer": None}  
+            )
+            ], style={'width': '100%', 'height': '600px', 'margin': 'auto'})
+        ])
+
+@dash.callback(
+    Output("geojson_cluster", "data"),
+    Input("vehicule_selector", "value"),
+    Input("grav_selector", "value"),
+    Input("year_range", "value")
+)
+def update_geojson(selected_type,grav_type, year_range):
+    if not selected_type or not year_range:
+        return {"type": "FeatureCollection", "features": []}
+    
+    catv = selected_type if selected_type else "all"
+    grav = grav_type if grav_type else "all"
+
+    points = get_filtered_points(catv,grav, year_range[0], year_range[1])
+
+    features = []
+    for p in points:
+        popup_text = f"""\
+            Type : {p['catv']}
+            Météo : {p['atm']}
+            Collision : {p['col']}
+            Chaussée : {p['surf']}
+            Manœuvre : {p['manv']}
+            Gravité : {p['grav']}"""
+
+        features.append({
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [p["lon"], p["lat"]]
+            },
+            "properties": {
+                "popup": popup_text
+            }
+        })
+
+    return {"type": "FeatureCollection", "features": features}
