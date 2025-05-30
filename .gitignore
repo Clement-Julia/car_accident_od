@@ -5,3 +5,4 @@ dataset.zip
 bdd.db
 __pycache__
 *.ipynb
+/back/models

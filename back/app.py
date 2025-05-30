@@ -1,8 +1,24 @@
 from flask import Flask, jsonify, request
-import sqlite3
+from sklearn.preprocessing import StandardScaler
+
 import os
+import joblib
+import sqlite3
+import numpy as np
+import pandas as pd
 
 app = Flask(__name__)
+
+model_main = joblib.load("back/models/hist.pkl")
+model_rf = joblib.load("back/models/rf.pkl")
+label_encoder = joblib.load("back/models/label_encoder.pkl")
+
+features_path = "back/models/feature_columns.pkl"
+feature_columns = joblib.load(features_path)
+
+scaler = StandardScaler()
+
+os.environ["LOKY_MAX_CPU_COUNT"] = "8"
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "bdd.db")
 
@@ -64,6 +80,77 @@ def get_filtered_points():
         })
 
     return jsonify(results)
+
+@app.route("/prediction", methods=["POST"])
+def predict_accident():
+    data = request.get_json()
+
+    features_wanted = [
+        "sexe", "catu", "catv", "atm", "lum", "col", "choc",
+        "manv", "plan", "surf", "nbv", "secu1", "infra", "place", "age"
+    ]
+
+    catv_mapping = {
+        'Voiture': 'Voiture',
+        'Véhicule utilitaire': 'Voiture',
+        'Poids lourd > 7.5t': 'Poids lourd',
+        'Poids lourd <= 7.5t': 'Poids lourd',
+        'PL + remorque': 'Poids lourd',
+        'Tracteur + semi-remorque': 'Poids lourd',
+        'Tracteur routier seul': 'Poids lourd',
+        'Quad lourd': 'Deux-roues motorisé',
+        'Quad léger': 'Deux-roues motorisé',
+        'Voiturette': 'Voiture',
+        'Scooter <= 50 cm3': 'Deux-roues motorisé',
+        'Scooter > 50 cm3': 'Deux-roues motorisé',
+        'Scooter > 125 cm3': 'Deux-roues motorisé',
+        'Scooter <= 125 cm3': 'Deux-roues motorisé',
+        'Cyclomoteur <50cm3': 'Deux-roues motorisé',
+        'Moto > 125 cm3': 'Deux-roues motorisé',
+        'Moto <= 125 cm3': 'Deux-roues motorisé',
+        '3RM > 50 cm3': 'Deux-roues motorisé',
+        '3RM <= 50 cm3': 'Deux-roues motorisé',
+        'Bicyclette': 'Deux-roues non motorisé',
+        'EDP motorisé': 'Deux-roues motorisé',
+        'EDP non motorisé': 'Deux-roues non motorisé',
+        'VAE': 'Vélo',
+        'Train': 'Trains',
+        'Tramway': 'Transport collectif',
+        'Autocar': 'Transport collectif',
+        'Autobus': 'Transport collectif',
+        'Engin spécial': 'Autres',
+        'Indéterminable': 'Autres',
+        'Non renseigné': 'Autres',
+        'Autre': 'Autres'
+    }
+
+    input_df = pd.DataFrame([data])[features_wanted]
+    input_df["catv"] = input_df["catv"].replace(catv_mapping)
+
+    input_encoded = pd.get_dummies(input_df.astype(str))
+    input_encoded = input_encoded.reindex(columns=feature_columns, fill_value=0)
+ 
+    if "age" in input_encoded.columns:
+        input_encoded[["age"]] = scaler.transform(input_encoded[["age"]])
+
+    input_encoded = input_encoded.astype(np.float32)
+
+    y_pred_main = model_main.predict(input_encoded)[0]
+    proba_main = model_main.predict_proba(input_encoded)[0][1]
+    proba_rf = model_rf.predict_proba(input_encoded)[0][1]
+    seuil = 0.60
+
+    y_pred_final = 3 if (y_pred_main != 3 and proba_rf > seuil) else y_pred_main
+
+    prediction = {
+        "prediction": int(label_encoder.inverse_transform([y_pred_final])[0]),
+        "probabilité": round(float(proba_main), 3),
+        "corrigé": bool(y_pred_main != y_pred_final),
+        "probabilité_risque_grave": round(float(proba_rf), 3)
+    }
+
+    return jsonify(prediction)
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
