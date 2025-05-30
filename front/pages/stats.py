@@ -13,6 +13,7 @@ from utils.helpers import accordion_stats
 import pandas as pd
 import requests
 
+df = get_data()
 dash.register_page(__name__, name="Statistiques", path="/statistique")
 
 API_URL = "http://localhost:5001"
@@ -59,15 +60,13 @@ def update_section(selected_section):
     if selected_section == "meteo":
         return html.Div([
             html.H4("Section : Statistiques météo"),
-            dcc.Graph(figure=plot_gravite_meteo(df.copy())),
+            dcc.Graph(figure=plot_gravite_meteo(df)),
             html.Hr(),
-            dcc.Graph(figure=plot_nombre_accidents_meteo(df_unique.copy())),
-            # accordion_stats("Âge moyen et écart-type par gravité", dcc.Graph(figure=plot_nombre_accidents_meteo_sans_normale(df.copy())), is_percent=False),
+            dcc.Graph(figure=plot_nombre_accidents_meteo(df)),
             html.Hr(),
-            dcc.Graph(figure=plot_nombre_accidents_meteo_sans_normale(df_unique.copy())),
-            # accordion_stats("Âge moyen et écart-type par gravité", dcc.Graph(figure=plot_nombre_accidents_meteo_sans_normale(df.copy())), is_percent=False),
+            dcc.Graph(figure=plot_nombre_accidents_meteo_sans_normale(df)),
             html.Hr(),
-            dcc.Graph(figure=plot_catr_atm(df_unique.copy())),
+            dcc.Graph(figure=plot_catr_atm(df)),
             html.P("Ici se trouveront les graphiques interactifs liés à la météo.")
         ])
     elif selected_section == "temporal":
