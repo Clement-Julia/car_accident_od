@@ -13,6 +13,12 @@ def load_temporal_data(df):
 
     return df
 
+def plot_tendance_annuelle(df):
+    df_agg = df.groupby('annee').size().reset_index(name='count')
+    fig = px.line(df_agg, x='annee', y='count', title="Tendance annuelle des accidents", template="plotly_dark")
+    fig.update_xaxes(dtick=1, tickformat=".0f")
+    return fig
+
 def plot_accidents_mois(df):
     mois_labels = {
         1: "Janvier", 2: "Février", 3: "Mars", 4: "Avril", 5: "Mai", 6: "Juin",
@@ -35,12 +41,6 @@ def plot_accidents_jour(df):
 def plot_accidents_heure(df):
     return px.histogram(df, x='heure', title="Accidents par heure", nbins=24, template="plotly_dark")
 
-def plot_tendance_annuelle(df):
-    df_agg = df.groupby('annee').size().reset_index(name='count')
-    fig = px.line(df_agg, x='annee', y='count', title="Tendance annuelle des accidents", template="plotly_dark")
-    fig.update_xaxes(dtick=1, tickformat=".0f")
-    return fig
-
 def plot_age_annee(df):
     df = df.dropna(subset=['an_nais'])
     df['an_nais'] = pd.to_numeric(df['an_nais'], errors='coerce')
@@ -61,6 +61,24 @@ def plot_age_annee(df):
         template="plotly_dark"
     )
     return fig
+
+def age_annee_stats(df):
+    df = df.dropna(subset=['an_nais'])
+    df['an_nais'] = pd.to_numeric(df['an_nais'], errors='coerce')
+    df = df.dropna(subset=['an_nais'])
+
+    df['annee'] = df['date'].dt.year
+    df['age'] = df['annee'] - df['an_nais']
+
+    bins = [0, 18, 30, 45, 60, 75, 90, 120]
+    labels = ['<18', '18-29', '30-44', '45-59', '60-74', '75-89', '90+']
+    df['tranche_age'] = pd.cut(df['age'], bins=bins, labels=labels)
+
+    df_group = df.groupby(['annee', 'tranche_age']).size().unstack(fill_value=0)
+    df_percent = df_group.divide(df_group.sum(axis=1), axis=0) * 100
+    df_percent = df_percent.round(1).reset_index()
+
+    return df_percent
 
 def plot_heatmap_jour_heure(df):
     jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
