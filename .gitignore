@@ -2,8 +2,6 @@ dataset_simplify.csv
 dataset.zip
 /data/*
 !/data/bdd_gen.py
-/front/graphs/__pycache__
-/front/pages/__pycache__
 bdd.db
-/back/__pycache__
-/utils/__pycache__/
+__pycache__
+*.ipynb

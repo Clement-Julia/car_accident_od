@@ -61,6 +61,46 @@ body {
     text-decoration: none;
 }
 
+/* ----------------------------------- SELECT ----------------------------------- */
+.custom-dropdown .Select-control,
+.custom-dropdown .Select-menu-outer {
+    background-color: #222;
+    color: #fff;
+    border-color: #444;
+}
+.custom-dropdown .Select-placeholder {
+    color: #aaa;
+}
+.filter-dropdown .Select-control,
+.filter-dropdown .Select-menu-outer {
+    background-color: #222;
+    color: #fff;
+    border-color: #444;
+}
+.filter-dropdown .Select-placeholder {
+    color: #aaa;
+}
+.filter-dropdown {
+    font-size: 15px;
+}
+.filter-dropdown .Select-value-label {
+    color: #d7d7d7 !important;
+}
+.custom-dropdown {
+    width: 400px;
+    font-size: 18px;
+}
+.Select-value-label {
+    color: #d7d7d7 !important;
+}
+
+/* ----------------------------------- CARTE ----------------------------------- */
+.carteCustom {
+    width: 100%;
+    margin: auto;
+    margin-top: 20px;
+}
+
 /* ----------------------------------- RADIO ----------------------------------- */
 .radio-container {
     text-align: center;

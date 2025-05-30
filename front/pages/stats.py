@@ -5,12 +5,18 @@ import sqlite3
 import os
 from back.meteo_analysis import plot_gravite_meteo, plot_nombre_accidents_meteo, plot_nombre_accidents_meteo_sans_normale, plot_catr_atm
 from utils.helpers import accordion_stats
+from utils.data_loader import get_data
+from front.pages.temporal import get_temporal_content
+from front.pages.autres import get_autres_content
+
+from utils.helpers import accordion_stats
 import pandas as pd
 import requests
 
 dash.register_page(__name__, name="Statistiques", path="/statistique")
 
-API_URL = "http://localhost:5001"  # ou ton IP réelle si distribué
+API_URL = "http://localhost:5001"
+df = get_data()
 
 def get_vehicule_types():
     r = requests.get(f"{API_URL}/vehicule-types")
@@ -24,27 +30,27 @@ def get_filtered_points(catv,grav_type, start_year, end_year):
     r = requests.get(f"{API_URL}/points", params=params)
     return r.json()
 
-
-
-# Layout initial de la page
 layout = html.Div([
-    html.H2("Exploration des statistiques"),
-    dcc.Dropdown(
-        id="section_selector",
-        options=[
-            {"label": "Cartographie", "value": "carto"},
-            {"label": "Statistiques météo", "value": "meteo"},
-            {"label": "Statistiques temporelles", "value": "temporal"},
-            {"label": "Autres statistiques", "value": "autres"}
-        ],
-        value="meteo",
-        clearable=False,
-        style={"width": "300px", "marginBottom": "20px"}
-    ),
+    html.H2("Exploration des statistiques", className="text-center"),
+
+    html.Div([
+        dcc.Dropdown(
+            id="section_selector",
+            options=[
+                {"label": "Cartographie", "value": "carto"},
+                {"label": "Statistiques météo", "value": "meteo"},
+                {"label": "Statistiques temporelles", "value": "temporal"},
+                {"label": "Autres statistiques", "value": "autres"}
+            ],
+            value="meteo",
+            clearable=False,
+            className="custom-dropdown"
+        )
+    ], style={"display": "flex", "justifyContent": "center", "marginBottom": "20px"}),
+
     html.Div(id="section_content")
 ])
 
-# Callback pour afficher la section choisie
 @dash.callback(
     Output("section_content", "children"),
     Input("section_selector", "value")
@@ -64,19 +70,31 @@ def update_section(selected_section):
             dcc.Graph(figure=plot_catr_atm(df_unique.copy())),
             html.P("Ici se trouveront les graphiques interactifs liés à la météo.")
         ])
-    elif selected_section == "autres":
-        return html.Div([
-            html.H4("Section : Autres statistiques"),
-            html.P("Ici se trouveront d'autres indicateurs.")
-        ])
     elif selected_section == "temporal":
         return html.Div([
-            html.H4("Section : Statistiques temporelles"),
-            html.P("Ici se trouveront les graphiques interactifs liés au temps.")
+            html.H4("Section : Statistiques temporelles", className="title-main"),
+            html.Div([
+                html.Label("Sélectionnez une vue :", className="radio-title"),
+                dcc.RadioItems(
+                    id="mode-temporal",
+                    options=[
+                        {"label": "Données temporelles", "value": "vue1"},
+                        {"label": "Données temporelles croisées", "value": "vue2"},
+                    ],
+                    value="vue1",
+                    className="radio-switch",
+                    labelStyle={"marginRight": "30px"},
+                )
+            ], className="radio-container"),
+            html.Div(id="contenu-graphiques-temporaux")
         ])
+
+    elif selected_section == "autres":
+        return get_autres_content(df.copy())
+
     elif selected_section == "carto":
         # Prépare le dropdown avec les différents types de véhicules
-        vehicule_types = get_vehicule_types()
+        vehicule_types = sorted(get_vehicule_types())
         vehicule_dropdown = html.Div([
             html.Label("Filtrer par type de véhicule (catv) :"),
             dcc.Dropdown(
@@ -85,14 +103,17 @@ def update_section(selected_section):
                 value="",
                 placeholder="Sélectionner un type de véhicule",
                 className="carto_select"
-            )  
+            )
         ])
+        ordre_gravite = ["Indemne", "Blessé léger", "Blessé hospitalisé", "Tué"]
         grav_accident = get_grav_accident()
+        grav_tri = [g for g in ordre_gravite if g in grav_accident]
+
         grav_dropdown = html.Div([
-            html.Label("Filtrer par gravitée d'accident (grav) :"),
+            html.Label("Filtrer par gravité d'accident (grav) :"),
             dcc.Dropdown(
                 id="grav_selector",
-                options=[{"label":grav, "value": grav} for grav in grav_accident],
+                options=[{"label": grav, "value": grav} for grav in grav_tri],
                 value="",
                 placeholder="Sélectionner une gravité d'accident",
                 className="carto_select"
@@ -111,20 +132,23 @@ def update_section(selected_section):
                 allowCross=False
             )
         ])
-        # La section Carto intègre le dropdown pour filtrer et la carte avec un groupe de marqueurs
         return html.Div([
-            html.H4("Section : Cartographie"),
-            html.Div([vehicule_dropdown,grav_dropdown]),
+            html.Div([
+                html.Div(vehicule_dropdown, className="filter-dropdown"),
+                html.Div(grav_dropdown, className="filter-dropdown"),
+            ], style={"display": "flex", "gap": "25px", "justifyContent": "center", "marginBottom": "15px"}),
+
             period_range,
+
             dl.Map(id="map", center=[46.5, 2.5], zoom=6, children=[
                 dl.TileLayer(), 
-            dl.GeoJSON(
-                id="geojson_cluster",
-                cluster=True,
-                zoomToBoundsOnClick=True,
-                options={"pointToLayer": None}  
-            )
-            ], style={'width': '100%', 'height': '600px', 'margin': 'auto'})
+                dl.GeoJSON(
+                    id="geojson_cluster",
+                    cluster=True,
+                    zoomToBoundsOnClick=True,
+                    options={"pointToLayer": None}
+                )
+            ], style={'height': 'calc(100vh - 200px)'}, className="carteCustom")
         ])
 
 @dash.callback(
@@ -164,3 +188,10 @@ def update_geojson(selected_type,grav_type, year_range):
         })
 
     return {"type": "FeatureCollection", "features": features}
+
+@dash.callback(
+    Output("contenu-graphiques-temporaux", "children"),
+    Input("mode-temporal", "value")
+)
+def update_temporal_graphs(mode):
+    return get_temporal_content(mode, df.copy())
