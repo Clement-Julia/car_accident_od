@@ -1,14 +1,24 @@
+import pandas as pd
+import os
 import dash
-from dash import dcc, html
-from dash.dependencies import Input, Output
+from dash import html, dcc
 import dash_bootstrap_components as dbc
 
-app = dash.Dash(__name__, use_pages=True, pages_folder="front/pages", external_stylesheets=[dbc.themes.BOOTSTRAP])
+base_path = os.path.dirname(__file__)
+df = pd.read_csv(os.path.join(base_path, "data", "dataset_simplify.csv"), dtype=str)
+
+app = dash.Dash(
+    __name__,
+    use_pages=True,
+    pages_folder="front/pages",
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    suppress_callback_exceptions=True
+)
 server = app.server
 
 header = dbc.Navbar(
     dbc.Container([
-        html.Div("Accidents de la route en France (2019–2023)", className="navbar-title"),
+        html.Div("Accidents de la route en France (2014–2023)", className="navbar-title"),
         dbc.Nav(
             [
                 dbc.NavItem(

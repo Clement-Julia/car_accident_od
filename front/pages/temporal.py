@@ -4,12 +4,10 @@ from back.temporal_graphs import *
 import pandas as pd
 import os
 from utils.helpers import accordion_stats
+from utils.data_loader import get_data
 
 dash.register_page(__name__, name="Stats temporelles", path="/temporal")
-
-base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-df = pd.read_csv(os.path.join(base_path, "data", "dataset_simplify.csv"), dtype=str)
-df = load_temporal_data(df)
+df = get_data()
 
 layout = html.Div([
     html.H3("Analyse temporelle des accidents", className="title-main"),
@@ -46,7 +44,11 @@ def update_graphs(mode):
         ]
     else:
         return [
-            html.Div(dcc.Graph(figure=plot_age_annee(df)), className="card-dark"),
+            html.Div([
+                dcc.Graph(figure=plot_age_annee(df)),
+                accordion_stats("Répartition des tranches d’âge par année", age_annee_stats(df))
+            ], className="card-dark"),
+
             html.Div([
                 dcc.Graph(figure=plot_heatmap_jour_heure(df)),
                 accordion_stats("Top 10 des plages horaires d'accidents", stats_top_zones_temporelles(df), is_percent=False)
@@ -57,7 +59,6 @@ def update_graphs(mode):
                 accordion_stats("Répartition des blessures selon les années en pourcentage", stats_gravite_annee(df), is_percent=True),
             ], className="card-dark"),  
 
-            html.Div(dcc.Graph(figure=plot_gravite_annee(df)), className="card-dark"),
             html.Div(dcc.Graph(figure=plot_accidents_heure_gravite(df)), className="card-dark"),
             html.Div(dcc.Graph(figure=plot_accidents_jour_catr(df)), className="card-dark"),
         ]
