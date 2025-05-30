@@ -3,6 +3,8 @@ import dash_leaflet as dl
 from dash import html, dcc, Input, Output
 import sqlite3
 import os
+from back.meteo_analysis import plot_gravite_meteo, plot_nombre_accidents_meteo, plot_nombre_accidents_meteo_sans_normale, plot_catr_atm
+from utils.helpers import accordion_stats
 import pandas as pd
 import requests
 
@@ -51,6 +53,15 @@ def update_section(selected_section):
     if selected_section == "meteo":
         return html.Div([
             html.H4("Section : Statistiques météo"),
+            dcc.Graph(figure=plot_gravite_meteo(df.copy())),
+            html.Hr(),
+            dcc.Graph(figure=plot_nombre_accidents_meteo(df_unique.copy())),
+            # accordion_stats("Âge moyen et écart-type par gravité", dcc.Graph(figure=plot_nombre_accidents_meteo_sans_normale(df.copy())), is_percent=False),
+            html.Hr(),
+            dcc.Graph(figure=plot_nombre_accidents_meteo_sans_normale(df_unique.copy())),
+            # accordion_stats("Âge moyen et écart-type par gravité", dcc.Graph(figure=plot_nombre_accidents_meteo_sans_normale(df.copy())), is_percent=False),
+            html.Hr(),
+            dcc.Graph(figure=plot_catr_atm(df_unique.copy())),
             html.P("Ici se trouveront les graphiques interactifs liés à la météo.")
         ])
     elif selected_section == "autres":
