@@ -7,3 +7,4 @@ dataset.zip
 bdd.db
 /back/__pycache__
 /utils/__pycache__/
+/back/models
