@@ -111,3 +111,8 @@ body {
     padding: 6px 12px;
     text-align: left;
 }
+/* ------------------------------------------------ CARTO -------------------------------------------- */
+.carto_select{
+    width: 300px;
+    margin-bottom: 20px;
+}
