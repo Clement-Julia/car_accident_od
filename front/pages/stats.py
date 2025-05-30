@@ -24,27 +24,27 @@ def get_filtered_points(catv,grav_type, start_year, end_year):
     r = requests.get(f"{API_URL}/points", params=params)
     return r.json()
 
-
-
-# Layout initial de la page
 layout = html.Div([
-    html.H2("Exploration des statistiques"),
-    dcc.Dropdown(
-        id="section_selector",
-        options=[
-            {"label": "Cartographie", "value": "carto"},
-            {"label": "Statistiques météo", "value": "meteo"},
-            {"label": "Statistiques temporelles", "value": "temporal"},
-            {"label": "Autres statistiques", "value": "autres"}
-        ],
-        value="meteo",
-        clearable=False,
-        style={"width": "300px", "marginBottom": "20px"}
-    ),
+    html.H2("Exploration des statistiques", className="text-center"),
+
+    html.Div([
+        dcc.Dropdown(
+            id="section_selector",
+            options=[
+                {"label": "Cartographie", "value": "carto"},
+                {"label": "Statistiques météo", "value": "meteo"},
+                {"label": "Statistiques temporelles", "value": "temporal"},
+                {"label": "Autres statistiques", "value": "autres"}
+            ],
+            value="meteo",
+            clearable=False,
+            className="custom-dropdown"
+        )
+    ], style={"display": "flex", "justifyContent": "center", "marginBottom": "30px"}),
+
     html.Div(id="section_content")
 ])
 
-# Callback pour afficher la section choisie
 @dash.callback(
     Output("section_content", "children"),
     Input("section_selector", "value")

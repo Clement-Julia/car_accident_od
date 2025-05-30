@@ -61,6 +61,24 @@ body {
     text-decoration: none;
 }
 
+/* ----------------------------------- SELECT ----------------------------------- */
+.custom-dropdown .Select-control,
+.custom-dropdown .Select-menu-outer {
+    background-color: #222;
+    color: #fff;
+    border-color: #444;
+}
+.custom-dropdown .Select-placeholder {
+    color: #aaa;
+}
+.custom-dropdown {
+    width: 400px;
+    font-size: 18px;
+}
+.Select-value-label {
+    color: #d7d7d7 !important;
+}
+
 /* ----------------------------------- RADIO ----------------------------------- */
 .radio-container {
     text-align: center;
