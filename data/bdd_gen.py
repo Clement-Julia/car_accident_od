@@ -6,7 +6,7 @@ csv_path = "data/dataset_simplify.csv"
 table_name = "accidents"
 df = pd.read_csv(csv_path, low_memory=False)
 
-db_path = "bdd.db"
+db_path = "data/bdd.db"
 conn = sqlite3.connect(db_path)
 
 
