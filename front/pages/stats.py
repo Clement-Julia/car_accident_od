@@ -13,7 +13,8 @@ from dash import html, dcc, Output, Input
 import dash_leaflet as dl
 import pandas as pd
 import os
-from front.graphs.plot_meteo import plot_gravite_meteo_interactif, plot_nombre_accidents_meteo, plot_catr_atm
+from back.meteo_analysis import plot_gravite_meteo, plot_nombre_accidents_meteo, plot_nombre_accidents_meteo_sans_normale, plot_catr_atm
+from utils.helpers import accordion_stats
 
 dash.register_page(__name__, name="Statistiques", path="/statistique")
 def load_df():
@@ -66,12 +67,15 @@ def update_section(selected_section):
     if selected_section == "meteo":
         return html.Div([
             html.H4("Section : Statistiques météo"),
-            dcc.Graph(figure=plot_gravite_meteo_interactif(df)),
+            dcc.Graph(figure=plot_gravite_meteo(df.copy())),
             html.Hr(),
-            dcc.Graph(figure=plot_nombre_accidents_meteo(df_unique)),
+            dcc.Graph(figure=plot_nombre_accidents_meteo(df_unique.copy())),
+            # accordion_stats("Âge moyen et écart-type par gravité", dcc.Graph(figure=plot_nombre_accidents_meteo_sans_normale(df.copy())), is_percent=False),
             html.Hr(),
-            dcc.Graph(figure=plot_catr_atm(df_unique)),
-
+            dcc.Graph(figure=plot_nombre_accidents_meteo_sans_normale(df_unique.copy())),
+            # accordion_stats("Âge moyen et écart-type par gravité", dcc.Graph(figure=plot_nombre_accidents_meteo_sans_normale(df.copy())), is_percent=False),
+            html.Hr(),
+            dcc.Graph(figure=plot_catr_atm(df_unique.copy())),
         ])
     elif selected_section == "carto":
         vehicule_types = get_vehicule_types()

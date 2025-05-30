@@ -1,64 +1,83 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import os
+import plotly.express as px
 
-current_dir = os.path.dirname(__file__)
-data_path = os.path.join(current_dir, "..", "data", "dataset_simplify.csv")
-df = pd.read_csv(data_path)
-df_unique = df.drop_duplicates("Num_Acc")
+def plot_gravite_meteo(df):
 
-grav_mapping = {
-    'Indemne': 1,
-    'Blessé léger': 2,
-    'Blessé hospitalisé': 3,
-    'Tué': 4
-}
-df['grav_num'] = df['grav'].map(grav_mapping)
+    grav_mapping = {
+        'Indemne': 1,
+        'Blessé léger': 2,
+        'Blessé hospitalisé': 3,
+        'Tué': 4
+    }
+    df['grav_num'] = df['grav'].map(grav_mapping)
 
-def plot_gravite_meteo():
+
     gravite_par_atm = df.dropna(subset=['grav_num', 'atm'])
-    gravite_par_atm = gravite_par_atm.groupby('atm')['grav_num'].mean().reset_index()
+    gravite_par_atm = gravite_par_atm.groupby('atm', as_index=False)['grav_num'].mean()
     gravite_par_atm = gravite_par_atm.sort_values(by='grav_num', ascending=False)
 
-    plt.figure(figsize=(10, 6))
-    sns.barplot(data=gravite_par_atm, x='atm', y='grav_num', palette='viridis')
-    plt.title("Gravité moyenne des accidents par condition météo")
-    plt.xlabel("Condition météo")
-    plt.ylabel("Gravité moyenne")
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-    plt.show()
+    fig = px.bar(
+        gravite_par_atm,
+        x='atm',
+        y='grav_num',
+        title="Gravité moyenne des accidents par condition météo",
+        labels={'atm': 'Condition météo', 'grav_num': 'Gravité moyenne'},
+        color='grav_num',
+        color_continuous_scale='Viridis'
+    )
+    fig.update_layout(xaxis_tickangle=-45, template="plotly_dark")
+    return fig
 
-def plot_nombre_accidents_meteo_sans_normale():
+
+def plot_nombre_accidents_meteo_sans_normale(df):
+    df_unique = df.drop_duplicates("Num_Acc")
     df_filtered = df_unique[df_unique['atm'] != 'Normale']
     df_atm = df_filtered['atm'].value_counts().reset_index()
     df_atm.columns = ['atm', 'nb_accidents']
 
-    plt.figure(figsize=(10, 6))
-    sns.barplot(x='atm', y='nb_accidents', data=df_atm)
-    plt.title("Nombre d'accidents selon les conditions météorologiques (hors 'Normale')")
-    plt.xlabel("Conditions météo")
-    plt.ylabel("Nombre d'accidents")
-    plt.xticks(rotation=30)
-    plt.tight_layout()
-    plt.show()
+    fig = px.bar(
+        df_atm,
+        x='atm',
+        y='nb_accidents',
+        title="Nombre d'accidents selon les conditions météorologiques (hors 'Normale')",
+        labels={'atm': 'Conditions météo', 'nb_accidents': 'Nombre d\'accidents'},
+        color='nb_accidents'
+    )
+    fig.update_layout(xaxis_tickangle=-30, template="plotly_dark")
+    return fig
 
-def plot_catr_atm_sans_normale():
+
+def plot_nombre_accidents_meteo(df):
+    df_unique = df.drop_duplicates("Num_Acc")
+    # df_filtered = df_unique[df_unique['atm'] != 'Normale']
+    df_atm = df_unique['atm'].value_counts().reset_index()
+    df_atm.columns = ['atm', 'nb_accidents']
+
+    fig = px.bar(
+        df_atm,
+        x='atm',
+        y='nb_accidents',
+        title="Nombre d'accidents selon les conditions météorologiques",
+        labels={'atm': 'Conditions météo', 'nb_accidents': 'Nombre d\'accidents'},
+        color='nb_accidents'
+    )
+    fig.update_layout(xaxis_tickangle=-30, template="plotly_dark")
+    return fig
+
+def plot_catr_atm(df):
+    df_unique = df.drop_duplicates("Num_Acc")
+
     df_grouped = df_unique.groupby(['catr', 'atm']).size().reset_index(name='nb_accidents')
-    df_grouped = df_grouped[df_grouped['atm'] != 'Normale']
+    # df_grouped = df_grouped[df_grouped['atm'] != 'Normale']
 
-    plt.figure(figsize=(12, 6))
-    sns.barplot(x='catr', y='nb_accidents', hue='atm', data=df_grouped)
-    plt.title("Nombre d'accidents par type de route et conditions météorologiques (hors 'Normale')")
-    plt.xlabel("Type de route")
-    plt.ylabel("Nombre d'accidents")
-    plt.xticks(rotation=70)
-    plt.legend(title="Météo", bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.tight_layout()
-    plt.show()
-
-if __name__ == "__main__":
-    plot_gravite_meteo()
-    plot_nombre_accidents_meteo_sans_normale()
-    plot_catr_atm_sans_normale()
+    fig = px.bar(
+        df_grouped,
+        x='catr',
+        y='nb_accidents',
+        color='atm',
+        title="Nombre d'accidents par type de route et conditions météorologiques",
+        labels={'catr': 'Type de route', 'nb_accidents': 'Nombre d\'accidents', 'atm': 'Météo'},
+        barmode='group'
+    )
+    fig.update_layout(xaxis_tickangle=-70, template="plotly_dark")
+    return fig
