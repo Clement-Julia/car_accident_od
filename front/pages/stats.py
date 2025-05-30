@@ -5,12 +5,18 @@ import sqlite3
 import os
 from back.meteo_analysis import plot_gravite_meteo, plot_nombre_accidents_meteo, plot_nombre_accidents_meteo_sans_normale, plot_catr_atm
 from utils.helpers import accordion_stats
+from utils.data_loader import get_data
+from front.pages.temporal import get_temporal_content
+from front.pages.autres import get_autres_content
+
+from utils.helpers import accordion_stats
 import pandas as pd
 import requests
 
 dash.register_page(__name__, name="Statistiques", path="/statistique")
 
 API_URL = "http://localhost:5001"
+df = get_data()
 
 def get_vehicule_types():
     r = requests.get(f"{API_URL}/vehicule-types")
@@ -64,16 +70,28 @@ def update_section(selected_section):
             dcc.Graph(figure=plot_catr_atm(df_unique.copy())),
             html.P("Ici se trouveront les graphiques interactifs liés à la météo.")
         ])
-    elif selected_section == "autres":
-        return html.Div([
-            html.H4("Section : Autres statistiques"),
-            html.P("Ici se trouveront d'autres indicateurs.")
-        ])
     elif selected_section == "temporal":
         return html.Div([
-            html.H4("Section : Statistiques temporelles"),
-            html.P("Ici se trouveront les graphiques interactifs liés au temps.")
+            html.H4("Section : Statistiques temporelles", className="title-main"),
+            html.Div([
+                html.Label("Sélectionnez une vue :", className="radio-title"),
+                dcc.RadioItems(
+                    id="mode-temporal",
+                    options=[
+                        {"label": "Données temporelles", "value": "vue1"},
+                        {"label": "Données temporelles croisées", "value": "vue2"},
+                    ],
+                    value="vue1",
+                    className="radio-switch",
+                    labelStyle={"marginRight": "30px"},
+                )
+            ], className="radio-container"),
+            html.Div(id="contenu-graphiques-temporaux")
         ])
+
+    elif selected_section == "autres":
+        return get_autres_content(df.copy())
+
     elif selected_section == "carto":
         # Prépare le dropdown avec les différents types de véhicules
         vehicule_types = sorted(get_vehicule_types())
@@ -170,3 +188,10 @@ def update_geojson(selected_type,grav_type, year_range):
         })
 
     return {"type": "FeatureCollection", "features": features}
+
+@dash.callback(
+    Output("contenu-graphiques-temporaux", "children"),
+    Input("mode-temporal", "value")
+)
+def update_temporal_graphs(mode):
+    return get_temporal_content(mode, df.copy())
