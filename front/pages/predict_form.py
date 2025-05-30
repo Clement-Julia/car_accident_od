@@ -153,50 +153,50 @@ dropdown_options = {
 def generate_input(col):
     if col in dropdown_options:
         return dbc.Form([
-            dbc.Label(col.capitalize(), html_for=f"input-{col}"),
+            dbc.Label(col.capitalize(), html_for=f"input-{col}", className="form-label-custom"),
             dcc.Dropdown(
                 id=f"input-{col}",
                 options=dropdown_options[col],
                 placeholder=f"Choisir {col.capitalize()}",
-                style={"width": "100%"}
+                className="form-dropdown"
             )
         ])
     elif col == "age":
         return dbc.Form([
-            dbc.Label(col.capitalize(), html_for=f"input-{col}"),
-            dcc.Input(id=f"input-{col}", type="number", placeholder=f"Saisir {col}", style={"width": "100%"})
+            dbc.Label(col.capitalize(), html_for=f"input-{col}", className="form-label-custom"),
+            dcc.Input(id=f"input-{col}", type="number", placeholder=f"Saisir {col}", className="form-input")
         ])
     elif col == "place":
         return dbc.Form([
-            html.Img(src="/assets/aide_form_place.png", style={"width": "100%", "marginTop": "10px"}),
-            dbc.Label("Place", html_for=f"input-{col}"),
-            dcc.Input(id=f"input-{col}", type="text", placeholder="Saisir la place", style={"width": "100%"}),
+            html.Img(src="/assets/aide_form_place.png", className="form-image"),
+            dbc.Label("Place", html_for=f"input-{col}", className="form-label-custom"),
+            dcc.Input(id=f"input-{col}", type="text", placeholder="Saisir la place", className="form-input"),
             html.Br()
         ])
     else:
         return dbc.Form([
-            dbc.Label(col.capitalize(), html_for=f"input-{col}"),
-            dcc.Input(id=f"input-{col}", type="text", placeholder=f"Saisir {col}", style={"width": "100%"})
+            dbc.Label(col.capitalize(), html_for=f"input-{col}", className="form-label-custom"),
+            dcc.Input(id=f"input-{col}", type="text", placeholder=f"Saisir {col}", className="form-input")
         ])
 
 layout = dbc.Container([
-    html.H2("Saisie d'un accident", className="my-4 text-center"),
+    html.H2("Saisie d'un accident", className="page-title"),
 
     dbc.Card([
         dbc.CardBody([
             dbc.Row([
                 dbc.Col(generate_input(col), width=6) for col in selected_cols
-            ], className="g-3"),
+            ], className="form-row-custom"),
 
-            html.Div(className="d-flex justify-content-center my-3", children=[
-                dbc.Button("Soumettre", id="submit-button", color="primary", n_clicks=0)
+            html.Div(className="button-wrapper", children=[
+                dbc.Button("Soumettre", id="submit-button", color="primary", n_clicks=0, className="submit-button")
             ]),
 
             html.Hr(),
 
-            dbc.Alert(id="form-output", is_open=False, color="success", duration=4000)
+            dbc.Alert(id="form-output", is_open=False, color="success", duration=4000, className="alert-custom")
         ])
-    ], style={"padding": "20px", "boxShadow": "0px 0px 10px lightgray"})
+    ])
 ], fluid=True)
 
 
