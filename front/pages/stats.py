@@ -10,7 +10,7 @@ import requests
 
 dash.register_page(__name__, name="Statistiques", path="/statistique")
 
-API_URL = "http://localhost:5001"  # ou ton IP réelle si distribué
+API_URL = "http://localhost:5001"
 
 def get_vehicule_types():
     r = requests.get(f"{API_URL}/vehicule-types")
@@ -40,7 +40,7 @@ layout = html.Div([
             clearable=False,
             className="custom-dropdown"
         )
-    ], style={"display": "flex", "justifyContent": "center", "marginBottom": "30px"}),
+    ], style={"display": "flex", "justifyContent": "center", "marginBottom": "20px"}),
 
     html.Div(id="section_content")
 ])
@@ -76,7 +76,7 @@ def update_section(selected_section):
         ])
     elif selected_section == "carto":
         # Prépare le dropdown avec les différents types de véhicules
-        vehicule_types = get_vehicule_types()
+        vehicule_types = sorted(get_vehicule_types())
         vehicule_dropdown = html.Div([
             html.Label("Filtrer par type de véhicule (catv) :"),
             dcc.Dropdown(
@@ -85,14 +85,17 @@ def update_section(selected_section):
                 value="",
                 placeholder="Sélectionner un type de véhicule",
                 className="carto_select"
-            )  
+            )
         ])
+        ordre_gravite = ["Indemne", "Blessé léger", "Blessé hospitalisé", "Tué"]
         grav_accident = get_grav_accident()
+        grav_tri = [g for g in ordre_gravite if g in grav_accident]
+
         grav_dropdown = html.Div([
-            html.Label("Filtrer par gravitée d'accident (grav) :"),
+            html.Label("Filtrer par gravité d'accident (grav) :"),
             dcc.Dropdown(
                 id="grav_selector",
-                options=[{"label":grav, "value": grav} for grav in grav_accident],
+                options=[{"label": grav, "value": grav} for grav in grav_tri],
                 value="",
                 placeholder="Sélectionner une gravité d'accident",
                 className="carto_select"
@@ -111,20 +114,23 @@ def update_section(selected_section):
                 allowCross=False
             )
         ])
-        # La section Carto intègre le dropdown pour filtrer et la carte avec un groupe de marqueurs
         return html.Div([
-            html.H4("Section : Cartographie"),
-            html.Div([vehicule_dropdown,grav_dropdown]),
+            html.Div([
+                html.Div(vehicule_dropdown, className="filter-dropdown"),
+                html.Div(grav_dropdown, className="filter-dropdown"),
+            ], style={"display": "flex", "gap": "25px", "justifyContent": "center", "marginBottom": "15px"}),
+
             period_range,
+
             dl.Map(id="map", center=[46.5, 2.5], zoom=6, children=[
                 dl.TileLayer(), 
-            dl.GeoJSON(
-                id="geojson_cluster",
-                cluster=True,
-                zoomToBoundsOnClick=True,
-                options={"pointToLayer": None}  
-            )
-            ], style={'width': '100%', 'height': '600px', 'margin': 'auto'})
+                dl.GeoJSON(
+                    id="geojson_cluster",
+                    cluster=True,
+                    zoomToBoundsOnClick=True,
+                    options={"pointToLayer": None}
+                )
+            ], style={'height': 'calc(100vh - 200px)'}, className="carteCustom")
         ])
 
 @dash.callback(

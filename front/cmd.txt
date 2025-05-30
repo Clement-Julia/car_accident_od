@@ -1,4 +1,6 @@
 pip install dash
 pip install dash_bootstrap_components
 pip install dash_leaflet
+python data/bdd_gen.py
+python back/app.py
 python app.py
