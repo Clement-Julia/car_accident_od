@@ -17,6 +17,12 @@ features_path = "back/models/feature_columns.pkl"
 feature_columns = joblib.load(features_path)
 
 scaler = StandardScaler()
+grav_map = {
+    0: "Indemne",
+    1: "Blessé hospitalisé",
+    2: "Blessé léger",
+    3: "Tué"
+}
 
 os.environ["LOKY_MAX_CPU_COUNT"] = "8"
 
@@ -141,9 +147,12 @@ def predict_accident():
     seuil = 0.60
 
     y_pred_final = 3 if (y_pred_main != 3 and proba_rf > seuil) else y_pred_main
+    
+    print(y_pred_final)
+    print(label_encoder.inverse_transform([y_pred_final])[0])
 
     prediction = {
-        "prediction": int(label_encoder.inverse_transform([y_pred_final])[0]),
+        "prediction": grav_map[y_pred_final],
         "probabilité": round(float(proba_main), 3),
         "corrigé": bool(y_pred_main != y_pred_final),
         "probabilité_risque_grave": round(float(proba_rf), 3)

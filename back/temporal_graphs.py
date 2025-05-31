@@ -42,16 +42,16 @@ def plot_accidents_heure(df):
     return px.histogram(df, x='heure', title="Accidents par heure", nbins=24, template="plotly_dark")
 
 def plot_age_annee(df):
-    df = df.dropna(subset=['an_nais'])
-    df['an_nais'] = pd.to_numeric(df['an_nais'], errors='coerce')
-    df = df.dropna(subset=['an_nais'])
+    df = df.dropna(subset=['an_nais']).copy()
+    df.loc[:, 'an_nais'] = pd.to_numeric(df['an_nais'], errors='coerce')
+    df = df.dropna(subset=['an_nais']).copy()
 
-    df['annee'] = df['date'].dt.year
-    df['age'] = df['annee'] - df['an_nais']
+    df.loc[:, 'annee'] = df['date'].dt.year
+    df.loc[:, 'age'] = df['annee'] - df['an_nais']
 
     bins = [0, 18, 30, 45, 60, 75, 90, 120]
     labels = ['<18', '18-29', '30-44', '45-59', '60-74', '75-89', '90+']
-    df['tranche_age'] = pd.cut(df['age'], bins=bins, labels=labels)
+    df.loc[:, 'tranche_age'] = pd.cut(df['age'], bins=bins, labels=labels)
 
     df_group = df.groupby(['annee', 'tranche_age']).size().reset_index(name='count')
 

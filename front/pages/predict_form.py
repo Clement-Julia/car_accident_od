@@ -1,4 +1,5 @@
 import dash
+import requests
 from dash import dcc, html, Input, Output, State
 import dash_bootstrap_components as dbc
 
@@ -8,6 +9,29 @@ selected_cols = [
     "sexe", "catu", "catv", "atm", "lum", "col", "choc",
     "manv", "plan", "surf", "nbv", "secu1", "infra", "age","place"
 ]
+
+map_cols = {
+    "sexe": "Sexe",
+    "catu": "Catégorie d'usager",
+    "catv": "Catégorie du véhicule",
+    "atm": "Conditions atmosphériques",
+    "lum": "Lumière",
+    "col": "Type de collision",
+    "choc": "Point de choc initial",
+    "manv": "Manoeuvre",
+    "plan": "Tracé en plan",
+    "surf": "État de la surface",
+    "nbv": "Nombre de voies",
+    "secu1": "Équipement de sécurité",
+    "infra": "Aménagement - Infrastructure",
+    "age": "Âge",
+    "place": "Place occupée dans le véhicule"
+}
+
+def call_api_predict(data):
+    API_URL = "http://localhost:5001/prediction"
+    response = requests.post(API_URL, json=data)
+    return response.json()
 
 # Dropdown options
 dropdown_options = {
@@ -150,32 +174,61 @@ dropdown_options = {
     ]
 }
 
+
 def generate_input(col):
     if col in dropdown_options:
+        
+        default_value = None
+        if col == "sexe":
+            default_value = "Homme"
+        elif col == "atm":
+            default_value = "Pluie forte"
+        elif col == "lum":
+            default_value = "Nuit sans éclairage public"
+        elif col == "catu":
+            default_value = "Conducteur"
+        elif col == "choc":
+            default_value = "Avant gauche"
+        elif col == "plan":
+            default_value = "Non renseigné"
+        elif col == "surf":
+            default_value = "Normale"
+        elif col == "secu1":
+            default_value = "Aucun équipement"
+        elif col == "infra":
+            default_value = "Aucun"
+        elif col == "manv":
+            default_value = "Déport à gauche"
+        elif col == "col":
+            default_value = "Frontale (2 véhicules)"
+        elif col == "catv":
+            default_value = "Voiture"
+            
         return dbc.Form([
-            dbc.Label(col.capitalize(), html_for=f"input-{col}", className="form-label-custom"),
+            dbc.Label(map_cols.get(col, col), html_for=f"input-{col}", className="form-label-custom"),
             dcc.Dropdown(
                 id=f"input-{col}",
                 options=dropdown_options[col],
+                value=default_value,
                 placeholder=f"Choisir {col.capitalize()}",
                 className="form-dropdown"
             )
         ])
     elif col == "age":
         return dbc.Form([
-            dbc.Label(col.capitalize(), html_for=f"input-{col}", className="form-label-custom"),
-            dcc.Input(id=f"input-{col}", type="number", placeholder=f"Saisir {col}", className="form-input")
+            dbc.Label(map_cols.get(col, col), html_for=f"input-{col}", className="form-label-custom"),
+            dcc.Input(id=f"input-{col}", type="number", placeholder=f"Saisir {col}", className="form-input", value=55),
         ])
     elif col == "place":
         return dbc.Form([
             html.Img(src="/assets/aide_form_place.png", className="form-image"),
-            dbc.Label("Place", html_for=f"input-{col}", className="form-label-custom"),
-            dcc.Input(id=f"input-{col}", type="text", placeholder="Saisir la place", className="form-input"),
+            dbc.Label(map_cols.get(col, col), html_for=f"input-{col}", className="form-label-custom"),
+            dcc.Input(id=f"input-{col}", type="text", placeholder="Saisir la place", className="form-input", value="1"),
             html.Br()
         ])
     else:
         return dbc.Form([
-            dbc.Label(col.capitalize(), html_for=f"input-{col}", className="form-label-custom"),
+            dbc.Label(map_cols.get(col, col).capitalize(), html_for=f"input-{col}", className="form-label-custom"),
             dcc.Input(id=f"input-{col}", type="text", placeholder=f"Saisir {col}", className="form-input")
         ])
 
@@ -188,26 +241,51 @@ layout = dbc.Container([
                 dbc.Col(generate_input(col), width=6) for col in selected_cols
             ], className="form-row-custom"),
 
+            html.Div(id="form-output", className="result-output"),
+            
             html.Div(className="button-wrapper", children=[
                 dbc.Button("Soumettre", id="submit-button", color="primary", n_clicks=0, className="submit-button")
             ]),
 
-            html.Hr(),
-
-            dbc.Alert(id="form-output", is_open=False, color="success", duration=4000, className="alert-custom")
+            # html.Hr(),
         ])
     ])
 ], fluid=True)
 
+def render_prediction_card(response):
+    gravité = response.get("prediction")
+    corrigé = response.get("corrigé")
+    proba_grave = response.get("probabilité_risque_grave")
+
+    couleur = {
+        "Indemne": "success",
+        "Blessé léger": "info",
+        "Blessé hospitalisé": "warning",
+        "Tué": "danger"
+    }.get(gravité, "secondary")
+
+    return dbc.Card([
+        dbc.CardHeader("Résultat de la prédiction", className="text-white bg-primary"),
+        dbc.CardBody([
+            html.H4(f"{gravité}", className=f"text-{couleur}"),
+            # html.P(f"Probabilité de risque grave : {proba_grave:.0%}"),
+            # html.P("Correction manuelle appliquée" if corrigé else "Prédiction directe du modèle")
+        ])
+    ], color="dark", inverse=True)
 
 @dash.callback(
     Output("form-output", "children"),
-    Output("form-output", "is_open"),
     Input("submit-button", "n_clicks"),
     [State(f"input-{col}", "value") for col in selected_cols]
 )
 def handle_form(n_clicks, *values):
-    if n_clicks > 0:
-        data = dict(zip(selected_cols, values))
-        return f"Données enregistrées : {data}", True
+    if n_clicks > 0:        
+        data = {col: value for col, value in zip(selected_cols, values)}
+        response = call_api_predict(data)
+        
+        if response.get("prediction") is not None:
+            return render_prediction_card(response), True
+        else:
+            return dbc.Alert("Erreur : données invalides ou API indisponible.", color="danger"), True
+        
     return "", False
